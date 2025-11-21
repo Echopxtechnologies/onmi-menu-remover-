@@ -202,6 +202,88 @@ function menu_remover_filter_navigation($nav)
     return $nav;
 }
 
+// ================================================================
+// REMOVE ANNOUNCEMENTS AND GDPR MENUS
+// ================================================================
+
+/**
+ * Remove "Announcements" and "GDPR" related menu items from the client navigation
+ * 
+ * @hook customers_area_navigation
+ */
+hooks()->add_filter('customers_area_navigation', 'menu_remover_remove_announcements_gdpr');
+function menu_remover_remove_announcements_gdpr($nav)
+{
+    // List of menu slugs related to announcements and GDPR to remove
+    $menus_to_remove = [
+        'announcements',   // Announcements menu
+        'gdpr',            // GDPR menu
+        'privacy_policy',  // Example slug for GDPR-related privacy policy
+    ];
+
+    // Remove specific menus
+    foreach ($nav as $key => $item) {
+        // If the item is in the removal list, remove it
+        if (isset($item['slug']) && in_array($item['slug'], $menus_to_remove, true)) {
+            unset($nav[$key]);
+            log_activity('Menu Remover: Removed menu item - ' . $item['slug']);
+        }
+    }
+
+    return $nav;
+}
+// Add this to the 'app_customers_head' hook to include jQuery and CSS
+hooks()->add_action('app_customers_head', 'menu_remover_add_jquery_and_css');
+
+function menu_remover_add_jquery_and_css() {
+    ?>
+    <style>
+        /* ============================================
+           Hide Announcements and GDPR Menus
+           ============================================ */
+        
+        /* Hide menus with class names matching customer-nav-item-announcement */
+        .customer-nav-item-announcement, 
+        .customer-nav-item-announcement-* { 
+            display: none !important; 
+        }
+
+        /* Hide menus related to GDPR */
+        .customer-nav-item-gdpr,
+        .customer-nav-item-privacy-policy { 
+            display: none !important; 
+        }
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            // ============================================
+            // Remove menu items based on class name patterns for Announcements and GDPR
+            // ============================================
+
+            // Class name patterns for Announcements and GDPR
+            var announcementClassPattern = 'customer-nav-item-announcement'; // For Announcements
+            var gdprClassPattern = 'customer-nav-item-gdpr'; // For GDPR and Privacy Policy
+            
+            // Remove all menu items with class patterns matching the announcement pattern
+            $('li[class^="' + announcementClassPattern + '"]').each(function() {
+                $(this).remove(); // Removes the entire <li> element
+                console.log('Removed menu item related to Announcement:', $(this).attr('class'));
+            });
+
+            // Remove all menu items with class patterns matching the GDPR pattern
+            $('li[class^="' + gdprClassPattern + '"]').each(function() {
+                $(this).remove(); // Removes the entire <li> element
+                console.log('Removed menu item related to GDPR:', $(this).attr('class'));
+            });
+
+            // Alternatively, if you just want to **hide** the items (instead of removing them):
+            // $('li[class^="' + announcementClassPattern + '"]').hide();
+            // $('li[class^="' + gdprClassPattern + '"]').hide();
+        });
+    </script>
+    <?php
+}
 
 
 // ================================================================
@@ -417,6 +499,219 @@ function menu_remover_add_client_css_js()
             console.log("Menu Remover: Client area menu cleanup initialized");
             console.log("Menu Remover: Hiding - Order List, Shipments, Files, Calendar");
         });
+    </script>
+
+      <script>
+    jQuery(document).ready(function($) {
+        
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        var config = {
+            debug: false, // Set to true for console logging
+            retryAttempts: 3, // Number of retry attempts
+            retryDelay: 300 // Delay between retries (ms)
+        };
+        
+        // ============================================
+        // REMOVE GDPR & ANNOUNCEMENTS FUNCTION
+        // ============================================
+        function removeUnwantedMenus() {
+            var removedCount = 0;
+            
+            // Method 1: Remove by class name patterns
+            var classPatterns = [
+                'customer-nav-item-announcement',
+                'customer-nav-item-announcements', 
+                'customers-nav-item-announcement',
+                'customers-nav-item-announcements',
+                'customer-nav-item-gdpr',
+                'customer-nav-item-privacy-policy',
+                'customer-nav-item-privacy'
+            ];
+            
+            $.each(classPatterns, function(index, className) {
+                // Exact match
+                $('li.' + className).each(function() {
+                    $(this).remove();
+                    removedCount++;
+                    if (config.debug) {
+                        console.log('Removed by class: ' + className);
+                    }
+                });
+                
+                // Partial match (starts with)
+                $('li[class^="' + className + '"]').each(function() {
+                    $(this).remove();
+                    removedCount++;
+                    if (config.debug) {
+                        console.log('Removed by class pattern: ' + $(this).attr('class'));
+                    }
+                });
+                
+                // Contains match
+                $('li[class*="' + className + '"]').each(function() {
+                    $(this).remove();
+                    removedCount++;
+                    if (config.debug) {
+                        console.log('Removed by class contains: ' + $(this).attr('class'));
+                    }
+                });
+            });
+            
+            // Method 2: Remove by href patterns
+            var hrefPatterns = [
+                'clients/announcements',
+                'clients/announcement',
+                'announcements',
+                'announcement',
+                'clients/gdpr',
+                'gdpr',
+                'clients/privacy',
+                'privacy_policy',
+                'privacy-policy'
+            ];
+            
+            $.each(hrefPatterns, function(index, pattern) {
+                $('a[href*="' + pattern + '"]').each(function() {
+                    var $link = $(this);
+                    var $parentLi = $link.closest('li');
+                    
+                    if ($parentLi.length) {
+                        $parentLi.remove();
+                        removedCount++;
+                        if (config.debug) {
+                            console.log('Removed by href pattern: ' + pattern);
+                        }
+                    } else {
+                        // No parent li, hide the link itself
+                        $link.hide();
+                        removedCount++;
+                    }
+                });
+            });
+            
+            // Method 3: Remove by text content (case-insensitive)
+            var textPatterns = [
+                'announcement',
+                'announcements',
+                'gdpr',
+                'privacy policy',
+                'data protection'
+            ];
+            
+            $('.customers-nav-item, .customer-nav-item, .nav-item').each(function() {
+                var $item = $(this);
+                var itemText = $item.text().toLowerCase().trim();
+                
+                $.each(textPatterns, function(index, pattern) {
+                    if (itemText === pattern || itemText.indexOf(pattern) !== -1) {
+                        $item.remove();
+                        removedCount++;
+                        if (config.debug) {
+                            console.log('Removed by text: ' + itemText);
+                        }
+                        return false; // Break inner loop
+                    }
+                });
+            });
+            
+            // Method 4: Remove by data attributes
+            $('[data-group="announcements"], [data-group="announcement"], [data-group="gdpr"]').each(function() {
+                $(this).remove();
+                removedCount++;
+                if (config.debug) {
+                    console.log('Removed by data-group attribute');
+                }
+            });
+            
+            // Log results
+            if (config.debug || removedCount > 0) {
+                console.log('[Menu Remover] Removed ' + removedCount + ' unwanted menu items');
+            }
+            
+            return removedCount;
+        }
+        
+        // ============================================
+        // RETRY MECHANISM
+        // ============================================
+        function removeWithRetry(attempt) {
+            attempt = attempt || 1;
+            
+            var removed = removeUnwantedMenus();
+            
+            // If nothing was removed and we have retry attempts left, try again
+            if (removed === 0 && attempt < config.retryAttempts) {
+                if (config.debug) {
+                    console.log('[Menu Remover] Retry attempt ' + (attempt + 1));
+                }
+                setTimeout(function() {
+                    removeWithRetry(attempt + 1);
+                }, config.retryDelay);
+            }
+        }
+        
+        // ============================================
+        // INITIALIZE ON PAGE LOAD
+        // ============================================
+        removeWithRetry();
+        
+        // ============================================
+        // WATCH FOR DYNAMIC CONTENT (AJAX)
+        // ============================================
+        
+        // Run after AJAX requests complete
+        $(document).ajaxComplete(function() {
+            setTimeout(removeUnwantedMenus, 100);
+        });
+        
+        // Use MutationObserver for DOM changes (modern browsers)
+        if (window.MutationObserver) {
+            var observer = new MutationObserver(function(mutations) {
+                var shouldRemove = false;
+                
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length > 0) {
+                        // Check if added nodes contain navigation elements
+                        $(mutation.addedNodes).each(function() {
+                            if ($(this).is('.nav, .sidebar-menu, .customers-nav-item') || 
+                                $(this).find('.nav, .sidebar-menu, .customers-nav-item').length > 0) {
+                                shouldRemove = true;
+                                return false; // Break loop
+                            }
+                        });
+                    }
+                });
+                
+                if (shouldRemove) {
+                    if (config.debug) {
+                        console.log('[Menu Remover] DOM changed - reprocessing menus');
+                    }
+                    setTimeout(removeUnwantedMenus, 50);
+                }
+            });
+            
+            // Start observing the document body
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            if (config.debug) {
+                console.log('[Menu Remover] MutationObserver initialized');
+            }
+        }
+        
+        // ============================================
+        // ADDITIONAL CLEANUP ON WINDOW LOAD
+        // ============================================
+        $(window).on('load', function() {
+            setTimeout(removeUnwantedMenus, 200);
+        });
+        
+        console.log('[Menu Remover] Script initialized - GDPR & Announcements removal active');
+    });
     </script>
     <?php
 }
