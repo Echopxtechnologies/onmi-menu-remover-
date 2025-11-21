@@ -156,12 +156,10 @@ function menu_remover_force_omni_sales_redirect()
  * @hook customers_area_navigation
  */
 hooks()->add_filter('customers_area_navigation', 'menu_remover_filter_navigation');
-
 function menu_remover_filter_navigation($nav)
 {
     // List of menu slugs to remove
     $menus_to_remove = [
-        // Order/Shipment menus
         'order_list',      // Order list menu
         'orderlist',       // Alternative slug
         'orders',          // Alternative slug
@@ -178,21 +176,33 @@ function menu_remover_filter_navigation($nav)
         'calendars',       // Alternative slug
         'events',          // Alternative slug
     ];
-    
-    // Remove unwanted menus
+
+    // Ensure the Profile menu (or any menu with the class 'customer-nav-item-edit-profile') is not removed
+    $profile_menu_slug = 'profile'; // or adjust this if necessary
+
+    // Remove specific menus (except "Profile" or others)
     foreach ($nav as $key => $item) {
-        // Check both array key and slug property
-        $slug = isset($item['slug']) ? $item['slug'] : $key;
-        
-        // Remove if in our blacklist
-        if (in_array($slug, $menus_to_remove, true)) {
+        // Skip removal for "Profile" menu (or if the menu has the 'customer-nav-item-edit-profile' class)
+        if (isset($item['slug']) && $item['slug'] === $profile_menu_slug) {
+            continue;  // Skip removing this menu
+        }
+
+        // Alternatively, check if the menu item contains a specific class like 'customer-nav-item-edit-profile'
+        if (isset($item['class']) && strpos($item['class'], 'customer-nav-item-edit-profile') !== false) {
+            continue; // Skip removing the profile item with this class
+        }
+
+        // If the item is in the removal list, remove it
+        if (isset($item['slug']) && in_array($item['slug'], $menus_to_remove, true)) {
             unset($nav[$key]);
-            log_activity('Menu Remover: Removed menu item - ' . $slug);
+            log_activity('Menu Remover: Removed menu item - ' . $item['slug']);
         }
     }
-    
+
     return $nav;
 }
+
+
 
 // ================================================================
 // CSS + JAVASCRIPT FALLBACK (Hide menus via DOM)
@@ -311,40 +321,16 @@ function menu_remover_add_client_css_js()
                 // URL patterns to remove
                 var urlsToRemove = [
                     // Order/Shipment patterns
-                    "clients/order",
-                    "clients/orderlist",
-                    "clients/orders",
-                    "order_list",
-                    "orderlist",
-                    "clients/shipment",
+                   
                     "clients/shipments",
                     "shipments",
-                    
-                    // Files patterns
-                    "clients/files",
-                    "clients/file",
-                    "clients/documents",
-                    "/files",
-                    
-                    // Calendar patterns
-                    "clients/calendar",
-                    "clients/calendars",
-                    "clients/events",
-                    "/calendar"
+                  
                 ];
                 
                 // Text patterns to remove (case-insensitive)
                 var textsToRemove = [
                     "order list",
-                    "orderlist",
-                    "orders",
-                    "shipments",
-                    "shipment",
-                    "files",
-                    "file",
-                    "documents",
-                    "calendar",
-                    "calendars",
+                
                     "events"
                 ];
                 
