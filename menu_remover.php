@@ -64,7 +64,7 @@ function menu_remover_root_url_redirect()
         // If client is logged in, redirect to Omni Sales
         if ($is_client_logged_in) {
             log_activity('Menu Remover: Redirecting from root URL to Omni Sales');
-            redirect('omni_sales/omni_sales_client/index/1/4/0');
+            // redirect('omni_sales/omni_sales_client/index/1/4/0');
             exit();
         }
         // If not logged in, let them see the homepage/login
@@ -84,7 +84,7 @@ function menu_remover_root_url_redirect()
     
     if ($is_client_homepage && $is_client_logged_in) {
         log_activity('Menu Remover: Redirecting from client homepage to Omni Sales');
-        redirect('omni_sales/omni_sales_client/index/1/4/0');
+        // redirect('omni_sales/omni_sales_client/index/1/4/0');
         exit();
     }
 }
@@ -139,7 +139,7 @@ function menu_remover_force_omni_sales_redirect()
         // If we're not already on Omni Sales, redirect
         if (strpos($current_uri, 'omni_sales') === false) {
             log_activity('Menu Remover: Force redirecting to Omni Sales after login');
-            redirect('omni_sales/omni_sales_client/index/1/4/0');
+            // redirect('omni_sales/omni_sales_client/index/1/4/0');
             exit();
         }
     }
